@@ -59,7 +59,7 @@ Both sensors communicate via the **I2C protocol** and share the same `SDA` and `
 
 | LEDs & 220Ω Resistors | Active Buzzer |
 | :---: | :---: |
-| <img src="leds.jpg" width="220"> | <img src="buzzer.jfif" width="220"> |
+| <img src="Leds.jpg" width="220"> | <img src="buzzer.jfif" width="220"> |
 | Visual status indicators (Normal / Alert). | Audible alarm for critical readings. |
 
 ### Complete Circuit & Web Dashboard
