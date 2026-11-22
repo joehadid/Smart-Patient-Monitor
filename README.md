@@ -57,6 +57,11 @@ Both sensors communicate via the **I2C protocol** and share the same `SDA` and `
 | <img src="mlx90614.jpg" width="250"> | <img src="max30102.jpg" width="250"> |
 | Non-contact infrared sensor for measuring body temperature. | Optical sensor for measuring heart rate (BPM) and $SpO_2$. |
 
+| LEDs & 220Ω Resistors | Active Buzzer |
+| :---: | :---: |
+| <img src="leds.jpg" width="220"> | <img src="buzzer.jfif" width="220"> |
+| Visual status indicators (Normal / Alert). | Audible alarm for critical readings. |
+
 ### Complete Circuit & Web Dashboard
 
 | Hardware Wiring Setup | Web Dashboard Interface |
