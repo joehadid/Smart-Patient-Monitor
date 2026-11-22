@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام المراقبة الصحية - Smart Medical Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            padding: 30px;
+            width: 500px;
+            max-width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            backdrop-filter: blur(5px);
+        }
+
+        h1 {
+            color: #2c3e6d;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .sub {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 14px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+
+        .readings {
+            background: #f8f9ff;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .reading-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 18px;
+        }
+
+        .reading-item:last-child {
+            border-bottom: none;
+        }
+
+        .reading-label {
+            font-weight: bold;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .reading-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #4a6fa5;
+        }
+
+        .unit {
+            font-size: 14px;
+            color: #888;
+        }
+
+        button {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 18px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: bold;
+            width: 85%;
+            margin-bottom: 15px;
+        }
+
+        button:hover {
+            transform: scale(1.02);
+            background: #219a52;
+        }
+
+        .status {
+            margin-top: 15px;
+            font-size: 15px;
+            color: #4a6fa5;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 10px;
+            background: #eef2f7;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🩺 نظام المراقبة الصحية</h1>
+    <div class="sub">Smart Medical Monitor - Real-Time Hardware System</div>
+
+    <button id="connectBtn">🔌 توصيل الجهاز (Connect)</button>
+
+    <div class="readings">
+        <div class="reading-item">
+            <div class="reading-label">🌡️ درجة الحرارة</div>
+            <div><span class="reading-value" id="temp-val">--</span> <span class="unit">°C</span></div>
+        </div>
+        <div class="reading-item">
+            <div class="reading-label">💓 معدل النبض</div>
+            <div><span class="reading-value" id="bpm-val">--</span> <span class="unit">BPM</span></div>
+        </div>
+        <div class="reading-item">
+            <div class="reading-label">🫁 تشبع الأكسجين</div>
+            <div><span class="reading-value" id="spo2-val">--</span> <span class="unit">%</span></div>
+        </div>
+    </div>
+
+    <div class="status" id="statusText">⏳ في انتظار توصيل الأردوينو...</div>
+    <div class="footer">© نظام مراقبة العلامات الحيوية المتصل بالهاردوير</div>
+</div>
+
+<script>
+    const connectBtn = document.getElementById('connectBtn');
+    const tempVal = document.getElementById('temp-val');
+    const bpmVal = document.getElementById('bpm-val');
+    const spo2Val = document.getElementById('spo2-val');
+    const statusText = document.getElementById('statusText');
+
+    connectBtn.addEventListener('click', async () => {
+        try {
+            const port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 9600 });
+
+            connectBtn.innerText = "✅ الجهاز متصل ويعمل";
+            connectBtn.style.background = "#2980b9";
+            statusText.innerText = "📡 جاري استقبال القراءات الحية من الحساسات...";
+
+            const decoder = new TextDecoderStream();
+            port.readable.pipeTo(decoder.writable);
+            const reader = decoder.readable.getReader();
+
+            let buffer = "";
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                if (value) {
+                    buffer += value;
+                    let lines = buffer.split('\n');
+                    buffer = lines.pop();
+
+                    for (let line of lines) {
+                        line = line.trim();
+                        if (line.startsWith('{') && line.endsWith('}')) {
+                            try {
+                                const data = JSON.parse(line);
+                                updateDashboard(data);
+                            } catch (e) {
+                                console.warn("تخطي حزمة بيانات غير مكتملة:", line);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            alert("تعذر الاتصال: تأكد من توصيل كابل الأردوينو وإغلاق Serial Monitor.");
+            statusText.innerText = "❌ فشل الاتصال بالجهاز";
+            statusText.style.color = "#e74c3c";
+        }
+    });
+
+    function updateDashboard(data) {
+        if (data.temp !== undefined) tempVal.innerText = Number(data.temp).toFixed(1);
+        if (data.bpm !== undefined) bpmVal.innerText = data.bpm > 0 ? data.bpm : "--";
+        if (data.spo2 !== undefined) spo2Val.innerText = data.spo2 > 0 ? data.spo2 : "--";
+
+        if (data.bpm === 0 && data.spo2 === 0) {
+            statusText.innerText = "👆 يرجى وضع الإصبع على حساس النبض والأكسجين...";
+            statusText.style.color = "#7f8c8d";
+        } else if (data.temp > 37.5 || (data.spo2 > 50 && data.spo2 < 94)) {
+            statusText.innerText = "🔴 تنبيه خطر: ارتفاع في الحرارة أو انخفاض في الأكسجين!";
+            statusText.style.color = "#e74c3c";
+        } else {
+            statusText.innerText = "✅ الحالة الصحية مستقرة وطبيعية";
+            statusText.style.color = "#27ae60";
+        }
+    }
+</script>
+</body>
+</html>
