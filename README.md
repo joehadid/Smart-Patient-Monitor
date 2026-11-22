@@ -64,9 +64,9 @@ Both sensors communicate via the **I2C protocol** and share the same `SDA` and `
 
 ### Complete Circuit & Web Dashboard
 
-| Hardware Wiring Setup | Web Dashboard Interface |
-| :---: | :---: |
-| <img src="Arduino UNO Sensor Wiring Schematic.png" width="350"> | <img src="dashboard.png" width="350"> |
+| Web Dashboard Interface |
+ | :---: |
+ | <img src="dashboard.png" width="350"> |
 
 ---
 
